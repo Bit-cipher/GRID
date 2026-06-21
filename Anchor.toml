@@ -5,7 +5,7 @@ package_manager = "yarn"
 resolution = true
 skip-lint = false
 
-[programs.localnet]
+[programs.devnet]
 grid = "5FfK29L2jUZGYqwE4sGsyKJdJ4tDE2wrbpzzYdR5EUH"
 
 [provider]

@@ -61,4 +61,12 @@ pub mod grid {
     ) -> Result<()> {
         instructions::finalize_tournament_sol::handler(ctx, winners)
     }
+
+    pub fn cancel_tournament(ctx: Context<CancelTournament>) -> Result<()> {
+        instructions::cancel_tournament::handler(ctx)
+    }
+
+    pub fn claim_refund_sol(ctx: Context<ClaimRefundSol>) -> Result<()> {
+        instructions::claim_refund_sol::handler(ctx)
+    }
 }

@@ -9,6 +9,8 @@ pub mod initialize_platform;
 pub mod join_tournament_sol;
 pub mod join_tournament_spl;
 
+pub use cancel_tournament::*;
+pub use claim_refund_sol::*;
 pub use create_player_profile::*;
 pub use create_tournament::*;
 pub use finalize_tournament_sol::*;
