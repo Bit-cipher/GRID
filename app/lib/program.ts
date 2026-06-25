@@ -1,21 +1,24 @@
 "use client";
 
-import * as anchor from "@coral-xyz/anchor";
 import { AnchorProvider, Program } from "@coral-xyz/anchor";
 import { Connection, clusterApiUrl } from "@solana/web3.js";
-
-import idl from "../idl/grid.json";
+import { AnchorWallet } from "@solana/wallet-adapter-react";
 import type { Grid } from "../types/grid";
 
-export const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+import idl from "../idl/grid.json";
 
-export function getProvider(wallet: anchor.Wallet) {
+export const connection = new Connection(
+  clusterApiUrl("devnet"),
+  "confirmed"
+);
+
+export function getProvider(wallet: AnchorWallet) {
   return new AnchorProvider(connection, wallet, {
     commitment: "confirmed",
   });
 }
 
-export function getProgram(wallet: anchor.Wallet): Program<Grid> {
+export function getProgram(wallet: AnchorWallet) {
   const provider = getProvider(wallet);
 
   return new Program<Grid>(idl as Grid, provider);
