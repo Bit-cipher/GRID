@@ -89,12 +89,12 @@ export default function DashboardPage() {
     const t = setTimeout(() => {
       fetchSummary();
       fetchState();
-    }, 0);
+    }, 500);
 
     const i = setInterval(() => {
       fetchSummary();
       fetchState();
-    }, 3000);
+    }, 12000);
 
     return () => {
       clearTimeout(t);

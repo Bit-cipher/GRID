@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
@@ -5,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { getProgram } from "@/lib/program";
-import { getSolVaultPda } from "@/lib/pda";
+// import { getSolVaultPda } from "@/lib/pda";
 
 export type TournamentItem = {
   pubkey: PublicKey;
@@ -23,11 +24,9 @@ export type TournamentItem = {
 export function TournamentList({
   filter,
   onSelect,
-  refreshNonce,
 }: {
   filter?: "mine" | "completed";
   onSelect?: (tournament: PublicKey) => void;
-  refreshNonce?: number;
 }) {
   const wallet = useAnchorWallet();
   const [items, setItems] = useState<TournamentItem[]>([]);
@@ -35,46 +34,61 @@ export function TournamentList({
   async function load() {
     if (!wallet) return;
 
-    const program = getProgram(wallet);
-    const accounts = await program.account.tournament.all();
+    try {
+      const program = getProgram(wallet);
+      const accounts = await program.account.tournament.all();
 
-    let mapped: TournamentItem[] = accounts.map((item) => {
-      const t = item.account;
+      let mapped: TournamentItem[] = accounts.map((item: any) => {
+        const t = item.account;
 
-      return {
-        pubkey: item.publicKey,
-        title: t.title,
-        game: t.game,
-        entryFee: t.entryFee.toNumber() / LAMPORTS_PER_SOL,
-        prizePool: t.prizePool.toNumber() / LAMPORTS_PER_SOL,
-        currentPlayers: t.currentPlayers,
-        maxPlayers: t.maxPlayers,
-        organizer: t.organizer.toBase58(),
-        status: Object.keys(t.status)[0],
-        winners: t.winners.map((w: PublicKey) => w.toBase58()),
-      };
-    });
+        return {
+          pubkey: item.publicKey,
+          title: t.title,
+          game: t.game,
+          entryFee: t.entryFee.toNumber() / LAMPORTS_PER_SOL,
+          prizePool: t.prizePool.toNumber() / LAMPORTS_PER_SOL,
+          currentPlayers: t.currentPlayers,
+          maxPlayers: t.maxPlayers,
+          organizer: t.organizer.toBase58(),
+          status: Object.keys(t.status)[0],
+          winners: t.winners.map((w: PublicKey) => w.toBase58()),
+        };
+      });
 
-    if (filter === "mine") {
-      mapped = mapped.filter(
-        (x) => x.organizer === wallet.publicKey.toBase58(),
-      );
+      if (filter === "mine") {
+        mapped = mapped.filter(
+          (x) => x.organizer === wallet.publicKey.toBase58(),
+        );
+      }
+
+      if (filter === "completed") {
+        mapped = mapped.filter(
+          (x) => x.status === "completed" || x.status === "cancelled",
+        );
+      }
+
+      setItems(mapped.reverse());
+    } catch (err) {
+      console.warn("Failed to load tournaments:", err);
+
+      // Ignore rate-limit errors so UI doesn't crash
+      if (
+        String(err).includes("429") ||
+        String(err).includes("Too many requests")
+      ) {
+        return;
+      }
     }
-
-    if (filter === "completed") {
-      mapped = mapped.filter(
-        (x) => x.status === "completed" || x.status === "cancelled",
-      );
-    }
-
-    setItems(mapped.reverse());
   }
 
   useEffect(() => {
     load();
-    const i = setInterval(load, 5000);
+
+    const i = setInterval(load, 20000);
+
     return () => clearInterval(i);
-  }, [wallet, refreshNonce]);
+  }, [wallet]);
+
   if (!wallet) {
     return <Empty text="Connect wallet to fetch tournaments from chain." />;
   }

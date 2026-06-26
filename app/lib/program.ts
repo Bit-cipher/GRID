@@ -8,8 +8,8 @@ import type { Grid } from "../types/grid";
 import idl from "../idl/grid.json";
 
 export const connection = new Connection(
-  clusterApiUrl("devnet"),
-  "confirmed"
+  process.env.NEXT_PUBLIC_RPC_URL!,
+  "confirmed",
 );
 
 export function getProvider(wallet: AnchorWallet) {

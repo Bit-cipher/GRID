@@ -52,6 +52,7 @@ pub fn handler(ctx: Context<ClaimRefundSol>) -> Result<()> {
         tournament.payment_type == PaymentType::Sol,
         GridError::InvalidPaymentType
     );
+    
 
     require!(
         tournament.status == TournamentStatus::Cancelled,
