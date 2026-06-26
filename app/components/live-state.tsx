@@ -1,14 +1,19 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { PublicKey, LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { Trophy } from "lucide-react";
+import { PublicKey } from "@solana/web3.js";
+import { Copy, Trophy } from "lucide-react";
+
+function short(value?: string) {
+  if (!value) return "Not selected";
+  return `${value.slice(0, 6)}...${value.slice(-4)}`;
+}
 
 export function LiveState({
   state,
   tournamentPda,
   solVaultPda,
 }: {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   state: any;
   tournamentPda: PublicKey | null;
   solVaultPda: PublicKey | null;
@@ -24,65 +29,94 @@ export function LiveState({
       </div>
 
       {state ? (
-        <div className="grid gap-5 lg:grid-cols-[180px_1fr]">
-          <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-4">
-            <div className="grid h-32 place-items-center rounded-lg bg-black/40">
-              <Trophy className="h-14 w-14 text-violet-300" />
+        <>
+          <div className="grid gap-5 lg:grid-cols-[190px_1fr]">
+            <div className="rounded-xl border border-violet-500/30 bg-gradient-to-br from-violet-950/70 to-black p-4">
+              <div className="grid h-36 place-items-center rounded-lg bg-black/40">
+                <Trophy className="h-16 w-16 text-violet-300" />
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-xs">
+                <span className="rounded-md bg-emerald-500/20 px-2 py-1 text-emerald-400">
+                  {state.status.toUpperCase()}
+                </span>
+                <span className="text-zinc-400">
+                  {state.currentPlayers}/{state.maxPlayers} Players
+                </span>
+              </div>
             </div>
-            <div className="mt-3 flex justify-between text-xs">
-              <span className="rounded bg-emerald-500/15 px-2 py-1 text-emerald-400">
-                {state.status.toUpperCase()}
-              </span>
-              <span className="text-zinc-400">
-                {state.currentPlayers}/{state.maxPlayers}
-              </span>
+
+            <div className="grid gap-x-10 gap-y-4 sm:grid-cols-2">
+              <Row label="Title" value={state.title} />
+              <Row label="Status" value={state.status.toUpperCase()} green />
+              <Row label="Game" value={state.game} />
+              <Row
+                label="Players"
+                value={`${state.currentPlayers}/${state.maxPlayers}`}
+              />
+              <Row label="Entry Fee" value={`${state.entryFee} SOL`} />
+              <Row label="Vault Balance" value={`${state.vaultBalance} SOL`} />
+              <Row label="Prize Pool" value={`${state.prizePool} SOL`} />
+              <Row label="Organizer" value={short(state.organizer)} />
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Info label="Title" value={state.title} />
-            <Info label="Game" value={state.game} />
-            <Info label="Entry Fee" value={`${state.entryFee} SOL`} />
-            <Info label="Prize Pool" value={`${state.prizePool} SOL`} />
-            <Info label="Vault Balance" value={`${state.vaultBalance} SOL`} />
-            <Info
-              label="Organizer"
-              value={`${state.organizer.slice(0, 6)}...${state.organizer.slice(
-                -4,
-              )}`}
-            />
+          <div className="mt-5 grid gap-3 border-t border-white/10 pt-5 md:grid-cols-2">
+            <Address label="Tournament PDA" value={tournamentPda?.toBase58()} />
+            <Address label="Vault PDA" value={solVaultPda?.toBase58()} />
           </div>
-        </div>
+        </>
       ) : (
-        <div className="rounded-xl border border-dashed border-white/10 p-10 text-center text-zinc-500">
-          Select or create a tournament to view live on-chain state.
+        <div className="grid min-h-[300px] place-items-center rounded-xl border border-dashed border-white/10">
+          <div className="text-center">
+            <Trophy className="mx-auto h-12 w-12 text-zinc-600" />
+            <p className="mt-3 font-semibold">No tournament selected</p>
+            <p className="text-sm text-zinc-500">
+              Create or select a tournament to view live state.
+            </p>
+          </div>
         </div>
       )}
-
-      <div className="mt-5 grid gap-3 md:grid-cols-2">
-        <Address label="Tournament PDA" value={tournamentPda?.toBase58()} />
-        <Address label="Vault PDA" value={solVaultPda?.toBase58()} />
-      </div>
     </div>
   );
 }
 
-function Info({ label, value }: { label: string; value: string | number }) {
+function Row({
+  label,
+  value,
+  green,
+}: {
+  label: string;
+  value: string;
+  green?: boolean;
+}) {
   return (
     <div className="border-b border-white/10 pb-3">
       <p className="text-sm text-zinc-500">{label}</p>
-      <p className="mt-1 break-all text-sm font-semibold">{value}</p>
+      <p
+        className={`mt-1 break-all text-sm font-semibold ${
+          green ? "text-emerald-400" : "text-white"
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }
 
 function Address({ label, value }: { label: string; value?: string }) {
   return (
-    <div className="rounded-xl bg-black/30 p-3">
-      <p className="text-xs text-zinc-500">{label}</p>
-      <p className="break-all font-mono text-xs text-zinc-400">
-        {value || "Not selected"}
-      </p>
+    <div className="flex items-center justify-between rounded-xl bg-black/30 p-3">
+      <div>
+        <p className="text-xs text-zinc-500">{label}</p>
+        <p className="font-mono text-xs text-zinc-300">{short(value)}</p>
+      </div>
+
+      {value && (
+        <button onClick={() => navigator.clipboard.writeText(value)}>
+          <Copy size={16} className="text-zinc-500 hover:text-white" />
+        </button>
+      )}
     </div>
   );
 }

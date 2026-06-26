@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppWalletProvider } from "@/components/wallet-provider";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "GRID",
@@ -15,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AppWalletProvider>{children}</AppWalletProvider>
+        <AppWalletProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </AppWalletProvider>
       </body>
     </html>
   );

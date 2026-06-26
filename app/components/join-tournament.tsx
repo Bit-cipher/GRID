@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
+import { toast } from "sonner";
 
 import { getProgram, connection } from "@/lib/program";
 import { getPlayerProfilePda, getPlayerRegistrationPda } from "@/lib/pda";
@@ -11,18 +12,24 @@ import { getPlayerProfilePda, getPlayerRegistrationPda } from "@/lib/pda";
 export function JoinTournament({
   tournamentPda,
   solVaultPda,
+  onSuccess,
 }: {
   tournamentPda: PublicKey | null;
   solVaultPda: PublicKey | null;
+  onSuccess?: () => void;
 }) {
   const wallet = useAnchorWallet();
-  const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
 
   async function handleJoin() {
     try {
-      if (!wallet) return setStatus("Connect wallet first.");
-      if (!tournamentPda || !solVaultPda)
-        return setStatus("Select a tournament first.");
+      if (!wallet) return toast.error("Connect wallet first.");
+      if (!tournamentPda || !solVaultPda) {
+        return toast.error("Select a tournament first.");
+      }
+
+      setLoading(true);
+      toast.loading("Preparing tournament join...", { id: "join" });
 
       const program = getProgram(wallet);
       const profilePda = getPlayerProfilePda(wallet.publicKey);
@@ -34,6 +41,8 @@ export function JoinTournament({
       const existingProfile = await connection.getAccountInfo(profilePda);
 
       if (!existingProfile) {
+        toast.loading("Creating player profile...", { id: "join" });
+
         await program.methods
           .createPlayerProfile()
           .accounts({
@@ -44,7 +53,9 @@ export function JoinTournament({
           .rpc();
       }
 
-      await program.methods
+      toast.loading("Joining tournament and escrowing SOL...", { id: "join" });
+
+      const sig = await program.methods
         .joinTournamentSol()
         .accounts({
           tournament: tournamentPda,
@@ -55,10 +66,22 @@ export function JoinTournament({
         } as any)
         .rpc();
 
-      setStatus("Joined tournament successfully.");
-    } catch (err) {
+      toast.success("Joined tournament successfully.", {
+        id: "join",
+        description: sig.slice(0, 12) + "...",
+      });
+
+      onSuccess?.();
+    } catch (err: any) {
       console.error(err);
-      setStatus("Failed to join tournament.");
+
+      if (String(err).includes("already in use")) {
+        toast.error("You already joined this tournament.", { id: "join" });
+      } else {
+        toast.error("Failed to join tournament.", { id: "join" });
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -68,11 +91,9 @@ export function JoinTournament({
         Tournament: {tournamentPda?.toBase58() || "None selected"}
       </p>
 
-      <button onClick={handleJoin} className="btn-primary">
-        Join Tournament
+      <button disabled={loading} onClick={handleJoin} className="btn-primary">
+        {loading ? "Joining..." : "Join Tournament"}
       </button>
-
-      {status && <p className="text-sm text-zinc-400">{status}</p>}
     </div>
   );
 }
